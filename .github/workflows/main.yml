@@ -1,0 +1,17 @@
+name: Executar main.js a cada 10 minutos
+
+on:
+  schedule:
+    - cron:  '*/10 * * * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: node main.js
