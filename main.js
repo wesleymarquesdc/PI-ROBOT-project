@@ -101,7 +101,7 @@ async function formatProject(browser, link){
   description = '<b>DESCRIÇÃO</b>' + '\n\n' + description.trim();
   description = description.replace(/\.\.\. leia mais/g, '');
   
-  // data de expiração e categorias
+  // data de expiração
   const mt20 = await page.$$eval('.mt20', nodes => nodes.map(n => n.textContent));
   let expiration_date = mt20.filter(data => data.includes("Prazo"))[0];
   expiration_date = expiration_date.trim();
