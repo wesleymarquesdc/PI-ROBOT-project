@@ -1,4 +1,4 @@
-name: Execute a cada 15 minutos
+name: loop
 
 on:
   schedule:
