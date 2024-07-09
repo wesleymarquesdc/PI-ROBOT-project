@@ -2,7 +2,7 @@ name: Execute a cada 15 minutos
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '*/5 * * * *'
 
 jobs:
   build:
