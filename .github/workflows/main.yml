@@ -2,7 +2,7 @@ name: Executar main.js a cada 10 minutos
 
 on:
   schedule:
-    - cron:  '*/10 * * * *'
+    - cron:  '*/5 * * * *'
 
 jobs:
   build:
