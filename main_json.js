@@ -1,65 +1,37 @@
 require('dotenv').config()
 const puppeteer = require('puppeteer');
-const sqlite3 = require('sqlite3').verbose();
+const fs = require('fs');
 
 let powerBi = "https://www.workana.com/pt/jobs?language=pt&query=POWER+BI"
 let dataScience = "https://www.workana.com/jobs?language=pt&query=data+science&page=2"
-let ia = "https://www.workana.com/jobs?language=pt&query=inteligencia+artificial"
+let ai = "https://www.workana.com/jobs?language=pt&query=inteligencia+artificial"
 
-let urls = [powerBi, dataScience, ia];
+let urls = [powerBi, dataScience, ai];
 
 main();
 
 async function main(){
-  // faz conexão com bd
-  let db = new sqlite3.Database('./db.sqlite');
+  // obtém os projetos já presentes
+  let links;
+  try {
+    links = JSON.parse(fs.readFileSync('data-links.json'));
+  } catch (error) {
+    links = [];
+  }
+  // obtém novos projetos [projeto, link]
+  let projects = await getProjects();
 
-  db.run(`CREATE TABLE IF NOT EXISTS links (
-    link TEXT UNIQUE
-  )`, async (err) => {
-    if (err) {
-      return console.error(err.message);
+  // para cada novo projeto, verifica se já está presente, se não estiver, é adicionado e enviado para o telegram
+  for (let project of projects){
+    if(!isAlready(project[1], links)){
+      await sendMessageToTelegram(project[0]);
+      links.push(project[1]);
     }
+  }
 
-    // obtém os projetos do bd
-    let links = await new Promise((resolve, reject) => {
-      db.all('SELECT link FROM links', [], (err, rows) => {
-        if (err){
-          reject(err);
-        }
-        let retrievedLinks = rows ? rows.map(row => row.link) : [];
-        resolve(retrievedLinks);
-      });
-    });
-
-    // obtém novos projetos [projeto, link]
-    let projects = await getProjects();
-
-    // para cada novo projeto, verifica se já está no db, se não estiver, é adicionado e enviado para o telegram
-    for (let project of projects){
-      if(!isAlready(project[1], links)){
-        await sendMessageToTelegram(project[0]);
-        links.push(project[1]);
-      }
-    }
-
-    // adiciona todos os projetos no db com uma transação
-    db.run('BEGIN TRANSACTION');
-
-    let completed = 0;
-    for(let link of links){
-      db.run(`INSERT OR IGNORE INTO links(link) VALUES(?)`, [link], (err) => {
-        if (err) {
-          return db.run('ROLLBACK');
-        }
-    
-        completed++;
-        if (completed === links.length) {
-          db.run('COMMIT');
-        }
-      });
-    }
-  });
+  // armazena os novos projetos
+  let dataJSON = JSON.stringify(links);
+  fs.writeFileSync('data-links.json', dataJSON);
 }
 
 async function getProjects(){
@@ -68,6 +40,7 @@ async function getProjects(){
   const page = await browser.newPage();
   
   let projects = new Array();
+  // obtém os projetos de cada url
   for(let url of urls){
     await page.goto(url);
     // obtém os links de todos os projetos da página
@@ -104,7 +77,7 @@ async function formatProject(browser, link){
   // data de expiração
   const mt20 = await page.$$eval('.mt20', nodes => nodes.map(n => n.textContent));
   let expiration_date = mt20.filter(data => data.includes("Prazo"))[0];
-  expiration_date = expiration_date.trim();
+  expiration_date = (expiration_date || "").trim();
 
   // let categories = mt20.filter(data => data.includes("Categoria"))[0];
   // categories = categories.split('\n').map(s => s.trim()).join('\n').trim()
