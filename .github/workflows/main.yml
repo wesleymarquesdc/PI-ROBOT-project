@@ -1,17 +1,37 @@
-name: Executar main.js a cada 10 minutos
+name: Executar a cada 10 minutos
 
 on:
   schedule:
-    - cron:  '*/5 * * * *'
+    - cron: '*/10 * * * *'
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
           node-version: '20'
-      - run: npm install
-      - run: node main.js
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run main_json.js script
+        run: node main_json.js
+
+      - name: Configure Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Commit and push changes
+        run: |
+          git add .
+          git commit -m "Automated update by GitHub Actions"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
