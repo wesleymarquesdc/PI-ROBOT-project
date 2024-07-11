@@ -1,4 +1,4 @@
-name: Executar main.js a cada 10 minutos
+name: Executar a cada 10 minutos
 
 on:
   schedule:
@@ -14,4 +14,4 @@ jobs:
         with:
           node-version: '20'
       - run: npm install
-      - run: node main.js
+      - run: node main_json.js
